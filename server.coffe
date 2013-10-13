@@ -1,20 +1,44 @@
 http = require "http"
 
 
+class Router
+
+    constructor: (@default_handler) ->
+        @handlers = {}
+
+    add_view: (route, handler) ->
+        @handlers[route] = handler
+
+    dispatch: (route, request, response) ->
+        if route of @handlers
+            @handlers[route](request, response)
+        else
+            @default_handler(request, response)
+
+
 class WebServer
 
-    constructor: (@port) ->
+    constructor: (@port, @router) ->
 
-    dispatch: (request, response)->
-
-        response.writeHead 200, {"Content-Type": "text/plain"}
-        response.write "Hello World"
-        response.end()
+    dispatch: (request, response) =>
+        @router.dispatch("/1", request, response)
 
     run: () ->
-
         http.createServer(@dispatch).listen(@port);
 
 
-instance = new WebServer 8001
+default_handler = (request, response) ->
+    response.writeHead 200, {"Content-Type": "text/plain"}
+    response.write "Default handler"
+    response.end()
+
+first_handler = (request, response) ->
+    response.writeHead 200, {"Content-Type": "text/plain"}
+    response.write "firsts handler"
+    response.end()
+
+router = new Router default_handler
+router.add_view("/", first_handler)
+
+instance = new WebServer 8001, router
 instance.run()
